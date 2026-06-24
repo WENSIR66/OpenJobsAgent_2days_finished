@@ -21,6 +21,16 @@ class GLMEmbeddingClient:
         self.settings = settings
 
     def embed(self, texts: Sequence[str]) -> list[list[float]]:
+        prepared = [text[: self.settings.embedding_max_chars] for text in texts]
+        try:
+            return self._embed_request(prepared)
+        except RuntimeError as error:
+            if "HTTP 400" not in str(error) or len(prepared) == 1:
+                raise
+            midpoint = len(prepared) // 2
+            return self.embed(prepared[:midpoint]) + self.embed(prepared[midpoint:])
+
+    def _embed_request(self, texts: Sequence[str]) -> list[list[float]]:
         payload = json.dumps(
             {"model": self.settings.embedding_model, "input": list(texts)},
             ensure_ascii=False,
@@ -140,4 +150,3 @@ def build_faiss_index(
         "count": len(candidate_ids),
         "new_embeddings": len(pending),
     }
-

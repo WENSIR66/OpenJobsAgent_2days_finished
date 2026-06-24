@@ -1,7 +1,8 @@
 # OpenJobs Candidate Screening Agent
 
-当前阶段完成候选人知识库的第一步：清洗 1000 条 profile，将每条记录转成
-LangChain `Document`，并建立 SQLite/FTS5 BM25 与 FAISS 向量索引。
+当前已完成候选人知识库和第一版 RAG 搜索链路：清洗 1000 条 profile，将每条记录
+转成 LangChain `Document`，建立 SQLite/FTS5 BM25 与 FAISS 向量索引，并通过
+GLM-4.5-air 解析查询和生成推荐理由。
 
 ## 目录
 
@@ -13,8 +14,16 @@ backend/app/ingestion/
 ├── embeddings.py   # GLM embedding-3 与 FAISS
 ├── pipeline.py     # 端到端导入流程
 └── config.py       # 环境变量配置
+backend/app/rag/
+├── query_parser.py # LLM 查询解析 + 规则兜底
+├── retriever.py    # SQL 硬过滤、向量/BM25 混合召回、融合排序
+├── glm.py          # GLM Chat Completions 客户端
+├── models.py       # 查询条件与返回结构
+└── service.py      # RAG 编排和推荐理由
+backend/app/main.py # FastAPI 和 Markdown 聊天页
 scripts/
-└── ingest_profiles.py
+├── ingest_profiles.py
+└── test_rag.py
 tests/
 └── test_ingestion.py
 ```
@@ -61,6 +70,57 @@ cp .env.example .env
 
 ```bash
 ./.venv/bin/python -m pytest
+```
+
+## 查询链路
+
+1. GLM-4.5-air 将自然语言解析成 `semantic_query`、`metadata_filter_must` 和
+   `metadata_filter_should`；API 异常时使用本地规则兜底。
+2. must 条件通过 SQLite 先过滤候选人。
+3. 在过滤结果中分别取向量 Top20 和 BM25 Top20。
+4. 两路结果去重，并各自归一化到 0–1。
+5. should 条件按命中比例得到 0–1 分数。
+6. 按 `0.35 * vector + 0.35 * bm25 + 0.30 * metadata_should` 排序。
+7. GLM-4.5-air 根据 Top5 的原始履历、metadata 和分数组成生成 Markdown 推荐理由。
+
+查询拆解约定：
+
+- 核心编程语言/技术栈、明确年限等属于 must。
+- “优先、最好、加分、倾向”等从句属于 should。
+- 前端、后端、全栈等宽泛方向只保留在 `semantic_query`，不作为结构化过滤条件。
+- 技能和岗位关键词会扩展常见变体与生态词。例如 Python 同时搜索 Python3、
+  Django、Flask、FastAPI；后端岗位同时搜索 backend、back-end、server-side、
+  API、web services、microservices 等表达。
+- 技能和岗位 must 不局限于 metadata 单字段，而是在 headline、summary、skills、
+  当前/历史职位及工作经历描述组成的完整 `page_content` 中查找明确文本证据。
+- 同一概念的多个变体是 OR 关系；不同 must 条件之间仍是 AND 关系。
+- 英文关键词和 BM25 查询均忽略大小写。
+
+性能相关实现：
+
+- GLM 查询解析、query embedding 和理由生成共用一个 `httpx.AsyncClient` 连接池，
+  复用 HTTPS keep-alive 连接。
+- query embedding/FAISS 与 SQLite FTS5/BM25 通过 `asyncio.gather` 并行执行。
+- 阻塞的 SQLite 和 FAISS 操作放入工作线程，不阻塞 FastAPI 事件循环。
+- 连接池在 FastAPI 启动时创建，在应用关闭时统一释放。
+
+命令行端到端测试：
+
+```bash
+./.venv/bin/python scripts/test_rag.py \
+  "寻找至少5年经验的Python后端工程师，有云平台或DevOps经验优先"
+```
+
+启动聊天页面：
+
+```bash
+./.venv/bin/uvicorn backend.app.main:app --reload
+```
+
+浏览器打开 `http://127.0.0.1:8000`。API 为 `POST /api/chat`：
+
+```json
+{"message": "寻找至少5年经验的Python后端工程师，有云平台经验优先"}
 ```
 
 ## 清洗原则

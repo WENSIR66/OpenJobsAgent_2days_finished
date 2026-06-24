@@ -2,6 +2,7 @@ README.md
 pyproject.toml
 backend/__init__.py
 backend/app/__init__.py
+backend/app/main.py
 backend/app/ingestion/__init__.py
 backend/app/ingestion/cleaning.py
 backend/app/ingestion/config.py
@@ -9,6 +10,12 @@ backend/app/ingestion/documents.py
 backend/app/ingestion/embeddings.py
 backend/app/ingestion/pipeline.py
 backend/app/ingestion/storage.py
+backend/app/rag/__init__.py
+backend/app/rag/glm.py
+backend/app/rag/models.py
+backend/app/rag/query_parser.py
+backend/app/rag/retriever.py
+backend/app/rag/service.py
 openjobs_agent.egg-info/PKG-INFO
 openjobs_agent.egg-info/SOURCES.txt
 openjobs_agent.egg-info/dependency_links.txt
