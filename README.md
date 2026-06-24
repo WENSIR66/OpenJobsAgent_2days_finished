@@ -88,11 +88,13 @@ cp .env.example .env
 - 核心编程语言/技术栈、明确年限等属于 must。
 - “优先、最好、加分、倾向”等从句属于 should。
 - 前端、后端、全栈等宽泛方向只保留在 `semantic_query`，不作为结构化过滤条件。
-- 技能和岗位关键词会扩展常见变体与生态词。例如 Python 同时搜索 Python3、
-  Django、Flask、FastAPI；后端岗位同时搜索 backend、back-end、server-side、
-  API、web services、microservices 等表达。
-- 技能和岗位 must 不局限于 metadata 单字段，而是在 headline、summary、skills、
-  当前/历史职位及工作经历描述组成的完整 `page_content` 中查找明确文本证据。
+- 字段路由使用“主字段 + 合理辅助字段”：skills 可查技能、经历描述、summary、
+  职位标题和 headline；roles 可查当前/历史职位、headline 和标准角色；industry、
+  company、location、major、certification 也各自配置了相关辅助来源。
+- `experience_descriptions` 始终只查工作经历描述，避免概念漂移。
+- 技能关键词会扩展常见变体与生态词，例如 Python 同时搜索 Python3、Django、
+  Flask、FastAPI。
+- headline、summary、证书、专业、公司、地点等均有独立字段，不跨字段借用证据。
 - 同一概念的多个变体是 OR 关系；不同 must 条件之间仍是 AND 关系。
 - 英文关键词和 BM25 查询均忽略大小写。
 

@@ -23,14 +23,25 @@ SYSTEM_PROMPT = """
 is_working, current_title, current_department, management_level,
 is_decision_maker, total_experience_months, total_experience_years,
 highest_degree_level, skills, roles, levels, industries, companies,
-locations, majors, education_countries。
+locations, majors, education_countries, headline, summary,
+experience_titles, experience_descriptions, certifications。
 
 规则：
 1. must 是用户寻找目标的核心要求，不满足直接淘汰，包括明确年限、状态、学历和
    核心技能。
 2. should 是“优先、最好、加分、倾向”等偏好，只加分，不淘汰。
-3. skills 和 roles 的 must 不是只查 metadata 单字段，而会在候选人的 headline、
-   summary、skills、当前/历史职位和工作经历描述中做全文证据匹配。
+3. 每个关键词必须放入最准确的 field。系统会按“主字段 + 合理辅助字段”查询：
+   - skills → skills、经历描述、summary、职位标题、headline
+   - roles → 当前职位、历史职位、headline、标准角色
+   - industries → industry、公司标签、经历描述、summary
+   - companies → 公司名、经历描述、summary
+   - locations → 结构化地点、经历地址、summary
+   - majors → 专业、学位描述、课程
+   - certifications → 证书、summary、经历描述
+   - experience_descriptions → 只查经历描述，避免概念漂移
+   - 工作职责、项目实践、行为经历 → experience_descriptions
+   - 经历中的职位名称 → experience_titles
+   - 个人简介内容 → summary；职业标题文案 → headline
 4. 对核心技能必须扩展常见写法和生态技术，使用一个 in 条件。
    例如 Python 可扩展为 Python、Python3、Django、Flask、FastAPI。
 5. 同一概念的变体放在同一个 in 条件中，表示任一变体命中即可；不要拆成多个
@@ -41,6 +52,8 @@ locations, majors, education_countries。
 8. 所有英文字母匹配忽略大小写，Python、PYTHON、python 视为同一个词。
 9. highest_degree_level：0 专科/副学士及以下，1 本科，2 硕士，3 博士。
 10. 不要把“优先、最好、加分、倾向”从句误放到 must。
+11. 不要为了提高召回率把同一个技能重复放到 summary、experience_descriptions 等
+    多个条件；使用 skills 即可由系统完成受控的多来源技能证据查询。
 
 示例 1
 用户：寻找至少5年经验的Python后端工程师，有云平台经验优先。
@@ -129,6 +142,50 @@ locations, majors, education_countries。
       "value": ["0-to-1", "zero-to-one", "new product development", "product launch"]
     },
     {"field": "skills", "operator": "in", "value": ["English", "bilingual"]}
+  ]
+}
+
+示例 5
+用户：找5年以上Python工程师，必须有支付系统或高并发项目经验，Kafka经验优先。
+输出：
+{
+  "semantic_query": "Python engineer with payment systems high concurrency and Kafka experience",
+  "metadata_filter_must": [
+    {"field": "total_experience_years", "operator": "gte", "value": 5},
+    {
+      "field": "skills",
+      "operator": "in",
+      "value": ["Python", "Python3", "Django", "Flask", "FastAPI"]
+    },
+    {
+      "field": "experience_descriptions",
+      "operator": "in",
+      "value": ["payment system", "payments", "high concurrency", "high-throughput"]
+    }
+  ],
+  "metadata_filter_should": [
+    {"field": "skills", "operator": "in", "value": ["Kafka", "Apache Kafka"]}
+  ]
+}
+
+示例 6
+用户：找做过数据科学家的候选人，医疗行业优先。
+输出：
+{
+  "semantic_query": "data scientist with healthcare industry experience",
+  "metadata_filter_must": [
+    {
+      "field": "roles",
+      "operator": "in",
+      "value": ["data scientist", "machine learning scientist", "applied scientist"]
+    }
+  ],
+  "metadata_filter_should": [
+    {
+      "field": "industries",
+      "operator": "in",
+      "value": ["healthcare", "medical", "hospital", "health technology"]
+    }
   ]
 }
 """

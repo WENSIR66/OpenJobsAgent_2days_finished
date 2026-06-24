@@ -17,11 +17,16 @@ class MetadataCondition(BaseModel):
         "highest_degree_level",
         "skills",
         "roles",
+        "experience_titles",
+        "experience_descriptions",
+        "headline",
+        "summary",
         "levels",
         "industries",
         "companies",
         "locations",
         "majors",
+        "certifications",
         "education_countries",
     ]
     operator: Literal["eq", "contains", "gte", "lte", "in"]
@@ -41,6 +46,7 @@ class CandidateScore(BaseModel):
     metadata_should_score: float
     final_score: float
     matched_must: dict[str, bool] = Field(default_factory=dict)
+    must_evidence: dict[str, str] = Field(default_factory=dict)
     matched_should: list[str] = Field(default_factory=list)
     metadata: dict[str, Any]
     profile: dict[str, Any]

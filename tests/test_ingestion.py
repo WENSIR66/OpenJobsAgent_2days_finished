@@ -113,22 +113,164 @@ def test_frontend_backend_direction_is_removed_from_filters() -> None:
     assert "Django" in validated.metadata_filter_must[1].value
 
 
-def test_keyword_condition_uses_full_page_content() -> None:
+def test_skill_condition_uses_controlled_evidence_routes() -> None:
     condition = MetadataCondition(
         field="skills",
         operator="in",
         value=["Python", "Django", "Flask"],
     )
     sql, params = _sql_condition(condition)
-    assert "LOWER(page_content) LIKE ?" in sql
-    assert params == ["%python%", "%django%", "%flask%"]
+    assert "json_each(skills_json)" in sql
+    assert "json_extract(value, '$.description')" in sql
+    assert params.count("%django%") == 5
     matched, detail = _candidate_condition_match(
         {"skills": []},
-        "Experience: Built web APIs with DJANGO.",
+        {
+            "skills": [],
+            "summary": "Python expert",
+            "experience": [{"description": "Built web APIs with DJANGO."}],
+        },
         condition,
     )
     assert matched
-    assert "Django" in detail
+    assert "experience_descriptions 字段明确命中“django”" in detail
+
+    matched, detail = _candidate_condition_match(
+        {"skills": ["django"]},
+        {"skills": ["DJANGO"], "experience": []},
+        condition,
+    )
+    assert matched
+    assert "skills 字段明确命中“django”" in detail
+
+
+def test_skill_does_not_borrow_from_unrelated_fields() -> None:
+    condition = MetadataCondition(
+        field="skills",
+        operator="in",
+        value=["Python", "Django"],
+    )
+    matched, detail = _candidate_condition_match(
+        {"skills": []},
+        {
+            "skills": [],
+            "experience": [],
+            "education": [{"institution_name": "Python University"}],
+            "companies": ["Django LLC"],
+        },
+        condition,
+    )
+    assert not matched
+    assert "skills 字段未命中" in detail
+
+
+def test_roles_route_uses_headline_and_current_history_titles() -> None:
+    condition = MetadataCondition(
+        field="roles",
+        operator="in",
+        value=["data scientist"],
+    )
+    matched, detail = _candidate_condition_match(
+        {"roles": []},
+        {
+            "headline": "Senior Data Scientist",
+            "skills": [],
+            "experience": [],
+        },
+        condition,
+    )
+    assert matched
+    assert "headline 字段" in detail
+
+
+def test_industry_company_location_and_major_routes() -> None:
+    profile = {
+        "summary": "Worked in healthcare for Acme and served clients in Shanghai.",
+        "experience": [
+            {
+                "company_name": "Acme",
+                "company_tags": ["digital health"],
+                "description": "Built hospital workflow software.",
+                "address_city": "Shanghai",
+            }
+        ],
+        "education": [
+            {
+                "major": "Computer Science",
+                "degree_str": "MSc in Computer Science",
+            }
+        ],
+        "courses": ["Machine Learning"],
+    }
+    metadata = {
+        "industries": [],
+        "companies": ["Acme"],
+        "locations": ["Shanghai"],
+        "majors": ["Computer Science"],
+    }
+    cases = [
+        ("industries", "digital health", "company_tags"),
+        ("companies", "Acme", "companies"),
+        ("locations", "Shanghai", "locations"),
+        ("majors", "Machine Learning", "courses"),
+    ]
+    for field, value, source in cases:
+        matched, detail = _candidate_condition_match(
+            metadata,
+            profile,
+            MetadataCondition(field=field, operator="contains", value=value),
+        )
+        assert matched
+        assert f"{source} 字段" in detail
+
+
+def test_certification_route_and_description_isolation() -> None:
+    profile = {
+        "summary": "AWS certified professional",
+        "certifications": [],
+        "experience": [{"description": "Designed payment systems."}],
+    }
+    cert_match, cert_detail = _candidate_condition_match(
+        {},
+        profile,
+        MetadataCondition(
+            field="certifications",
+            operator="contains",
+            value="AWS certified",
+        ),
+    )
+    description_match, description_detail = _candidate_condition_match(
+        {},
+        profile,
+        MetadataCondition(
+            field="experience_descriptions",
+            operator="contains",
+            value="payment systems",
+        ),
+    )
+    assert cert_match and "summary 字段" in cert_detail
+    assert description_match and "experience_descriptions 字段" in description_detail
+
+
+def test_experience_description_has_its_own_scope() -> None:
+    condition = MetadataCondition(
+        field="experience_descriptions",
+        operator="in",
+        value=["payment system", "high concurrency"],
+    )
+    matched, detail = _candidate_condition_match(
+        {},
+        {
+            "skills": [],
+            "summary": "Payment enthusiast",
+            "experience": [
+                {"description": "Designed a HIGH CONCURRENCY transaction service."}
+            ],
+        },
+        condition,
+    )
+    assert matched
+    assert "experience_descriptions" in detail
 
 
 def test_rule_fallback_splits_core_and_preference_conditions() -> None:
