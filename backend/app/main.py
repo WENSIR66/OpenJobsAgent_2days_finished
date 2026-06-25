@@ -54,8 +54,8 @@ def index() -> str:
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>OpenJobs 候选人筛选</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
   <style>
     :root { color-scheme: light; --ink:#162033; --muted:#6b7280; --line:#e5e7eb; --blue:#2563eb; }
     * { box-sizing:border-box; }
@@ -82,36 +82,65 @@ def index() -> str:
 <body><main>
   <header><h1>OpenJobs 候选人筛选 Agent</h1><p>描述岗位、硬性要求和优先条件，我会给出 Top 5 与推荐理由。</p></header>
   <section id="messages"><div class="message assistant">你好，请告诉我你想找什么样的候选人。</div></section>
-  <form id="form"><textarea id="input" placeholder="例如：找有 5 年以上经验的 Python 后端工程师，熟悉云平台优先"></textarea><button>发送</button></form>
+  <form id="form"><textarea id="input" placeholder="例如：找有 5 年以上经验的 Python 后端工程师，熟悉云平台优先"></textarea><button type="submit">发送</button></form>
 </main>
 <script>
 const form=document.querySelector('#form'), input=document.querySelector('#input'),
   messages=document.querySelector('#messages'), button=form.querySelector('button');
-let conversationId=sessionStorage.getItem('openjobs_conversation_id')||crypto.randomUUID();
-sessionStorage.setItem('openjobs_conversation_id',conversationId);
+function createConversationId(){
+  if(globalThis.crypto&&typeof globalThis.crypto.randomUUID==='function'){
+    return globalThis.crypto.randomUUID();
+  }
+  return 'conversation-'+Date.now()+'-'+Math.random().toString(16).slice(2);
+}
+function readConversationId(){
+  try{return sessionStorage.getItem('openjobs_conversation_id')||createConversationId();}
+  catch(_){return createConversationId();}
+}
+function saveConversationId(value){
+  try{sessionStorage.setItem('openjobs_conversation_id',value);}catch(_){}
+}
+function renderMarkdown(content){
+  if(globalThis.marked&&globalThis.DOMPurify){
+    return DOMPurify.sanitize(marked.parse(content));
+  }
+  const wrapper=document.createElement('div');
+  wrapper.textContent=content;
+  return wrapper.innerHTML.split('\\n').join('<br>');
+}
+let conversationId=readConversationId();
+saveConversationId(conversationId);
 function add(content,role,markdown=false){
   const el=document.createElement('div'); el.className='message '+role;
-  el.innerHTML=markdown?DOMPurify.sanitize(marked.parse(content)):content.replaceAll('<','&lt;').replaceAll('>','&gt;');
+  if(markdown)el.innerHTML=renderMarkdown(content);
+  else el.textContent=content;
   messages.appendChild(el); el.scrollIntoView({behavior:'smooth',block:'end'}); return el;
 }
 form.addEventListener('submit',async(e)=>{
   e.preventDefault(); const text=input.value.trim(); if(!text)return;
   add(text,'user'); input.value=''; button.disabled=true;
   const loading=add('正在检索和分析…','assistant');
+  const controller=new AbortController();
+  const timeoutId=setTimeout(()=>controller.abort(),120000);
   try{
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:text,conversation_id:conversationId})});
+      body:JSON.stringify({message:text,conversation_id:conversationId}),signal:controller.signal});
     const data=await res.json(); if(!res.ok)throw new Error(data.detail||'请求失败');
     conversationId=data.conversation_id||conversationId;
-    sessionStorage.setItem('openjobs_conversation_id',conversationId);
-    loading.innerHTML=DOMPurify.sanitize(marked.parse(data.answer));
+    saveConversationId(conversationId);
+    loading.innerHTML=renderMarkdown(data.answer);
     const p=data.parsed_query, meta=document.createElement('div'); meta.className='meta';
     meta.textContent=p
       ? `意图：${data.intent} · 语义查询：${p.semantic_query} · 硬条件 ${p.metadata_filter_must.length} · 优先条件 ${p.metadata_filter_should.length}`
       : `意图：${data.intent} · 当前查询：${data.current_query||'无'}`;
     loading.appendChild(meta);
-  }catch(err){ loading.textContent='发生错误：'+err.message; }
-  finally{ button.disabled=false; input.focus(); }
+  }catch(err){
+    loading.textContent=err.name==='AbortError'
+      ? '请求超时，请检查网络或稍后重试。'
+      : '发生错误：'+err.message;
+  }finally{
+    clearTimeout(timeoutId); button.disabled=false; input.focus();
+  }
 });
 input.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();form.requestSubmit();}});
 </script></body></html>"""

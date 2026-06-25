@@ -244,12 +244,21 @@ scripts/
 
 ### 2.2 安装
 
-在项目根目录执行：
+先确认使用的是 Python 3.11 或更高版本。macOS 自带的 `/usr/bin/python3`
+可能仍是 Python 3.9，不能用于本项目：
 
 ```bash
-python -m venv .venv
+python3.12 --version
+```
+
+在项目根目录执行（如果本机安装的是 Python 3.11，可将 `python3.12` 替换为
+`python3.11`）：
+
+```bash
+python3.12 -m venv .venv
+./.venv/bin/python -m pip install --upgrade pip setuptools wheel
 ./.venv/bin/python -m pip install -e '.[dev]'
-cp .env.example .env
+test -f .env || cp .env.example .env
 ```
 
 在 `.env` 中填写：
@@ -291,15 +300,15 @@ data/indexes/candidates.manifest.json
 - 向量维度：2048
 - 需要人工关注的清洗异常：5 条记录、6 个告警
 
-### 2.4 一键启动服务
+### 2.4 启动聊天页面
 
-索引准备完成后，只需一条命令：
+完成安装和索引准备后，在项目根目录执行：
 
 ```bash
-./.venv/bin/uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+./.venv/bin/uvicorn backend.app.main:app --reload
 ```
 
-打开浏览器：
+`--reload` 会在修改后端或页面代码后自动重启开发服务。浏览器打开：
 
 ```text
 http://127.0.0.1:8000
@@ -316,6 +325,15 @@ curl http://127.0.0.1:8000/health
 ```json
 {"status": "ok"}
 ```
+
+如果看到 `address already in use`，说明 8000 端口已被其他进程占用。可以停止原进程，
+或临时改用其他端口：
+
+```bash
+./.venv/bin/uvicorn backend.app.main:app --reload --port 8001
+```
+
+此时访问 `http://127.0.0.1:8001`。
 
 ### 2.5 HTTP API
 
