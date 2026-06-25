@@ -122,7 +122,30 @@ cp .env.example .env
 浏览器打开 `http://127.0.0.1:8000`。API 为 `POST /api/chat`：
 
 ```json
-{"message": "寻找至少5年经验的Python后端工程师，有云平台经验优先"}
+{
+  "conversation_id": "浏览器或客户端生成的会话 ID",
+  "message": "寻找至少5年经验的Python后端工程师，有云平台经验优先"
+}
+```
+
+## 多轮交互
+
+每个 `conversation_id` 只维护两个状态：
+
+- `current_query`：当前完整查询
+- `current_results`：当前展示的候选人
+
+支持四种意图：
+
+- `new_search`：清空状态并完整检索。
+- `refine`：结合当前查询重写完整查询，只在 `current_results` 范围内过滤和重排。
+- `compare`：按序号或候选人 ID 定位候选人，并结合当前查询进行对比。
+- `follow_up`：解释某位候选人、整个列表或当前排序。
+
+程序重启后内存会话自动清空。命令行多轮测试：
+
+```bash
+./.venv/bin/python scripts/test_multiturn.py
 ```
 
 ## 清洗原则

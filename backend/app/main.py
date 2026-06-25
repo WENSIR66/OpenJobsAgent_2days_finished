@@ -26,6 +26,7 @@ app = FastAPI(
 
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
+    conversation_id: str | None = Field(default=None, max_length=100)
 
 
 @app.get("/health")
@@ -36,7 +37,10 @@ def health() -> dict[str, str]:
 @app.post("/api/chat")
 async def chat(payload: ChatRequest, request: Request) -> dict:
     try:
-        result = await request.app.state.rag_service.search(payload.message)
+        result = await request.app.state.rag_service.chat_turn(
+            payload.message,
+            payload.conversation_id,
+        )
         return result.model_dump()
     except Exception as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
@@ -83,6 +87,8 @@ def index() -> str:
 <script>
 const form=document.querySelector('#form'), input=document.querySelector('#input'),
   messages=document.querySelector('#messages'), button=form.querySelector('button');
+let conversationId=sessionStorage.getItem('openjobs_conversation_id')||crypto.randomUUID();
+sessionStorage.setItem('openjobs_conversation_id',conversationId);
 function add(content,role,markdown=false){
   const el=document.createElement('div'); el.className='message '+role;
   el.innerHTML=markdown?DOMPurify.sanitize(marked.parse(content)):content.replaceAll('<','&lt;').replaceAll('>','&gt;');
@@ -94,11 +100,15 @@ form.addEventListener('submit',async(e)=>{
   const loading=add('正在检索和分析…','assistant');
   try{
     const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message:text})});
+      body:JSON.stringify({message:text,conversation_id:conversationId})});
     const data=await res.json(); if(!res.ok)throw new Error(data.detail||'请求失败');
+    conversationId=data.conversation_id||conversationId;
+    sessionStorage.setItem('openjobs_conversation_id',conversationId);
     loading.innerHTML=DOMPurify.sanitize(marked.parse(data.answer));
     const p=data.parsed_query, meta=document.createElement('div'); meta.className='meta';
-    meta.textContent=`语义查询：${p.semantic_query} · 硬条件 ${p.metadata_filter_must.length} · 优先条件 ${p.metadata_filter_should.length}`;
+    meta.textContent=p
+      ? `意图：${data.intent} · 语义查询：${p.semantic_query} · 硬条件 ${p.metadata_filter_must.length} · 优先条件 ${p.metadata_filter_should.length}`
+      : `意图：${data.intent} · 当前查询：${data.current_query||'无'}`;
     loading.appendChild(meta);
   }catch(err){ loading.textContent='发生错误：'+err.message; }
   finally{ button.disabled=false; input.focus(); }

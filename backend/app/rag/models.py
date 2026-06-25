@@ -57,3 +57,26 @@ class SearchResponse(BaseModel):
     parsed_query: ParsedQuery
     candidates: list[CandidateScore]
     answer: str
+
+
+IntentType = Literal["new_search", "refine", "compare", "follow_up"]
+
+
+class IntentDecision(BaseModel):
+    intent: IntentType
+    rewritten_query: str | None = None
+    candidate_refs: list[str] = Field(default_factory=list)
+
+
+class ConversationState(BaseModel):
+    current_query: str | None = None
+    current_results: list[CandidateScore] = Field(default_factory=list)
+
+
+class ChatResponse(BaseModel):
+    conversation_id: str
+    intent: IntentType
+    current_query: str | None
+    parsed_query: ParsedQuery | None = None
+    candidates: list[CandidateScore] = Field(default_factory=list)
+    answer: str

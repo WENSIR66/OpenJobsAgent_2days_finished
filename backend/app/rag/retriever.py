@@ -486,10 +486,17 @@ class HybridRetriever:
                 list(candidate_ids),
             ).fetchall()
 
-    async def search(self, parsed: ParsedQuery, limit: int = 5) -> list[CandidateScore]:
+    async def search(
+        self,
+        parsed: ParsedQuery,
+        limit: int = 5,
+        candidate_scope: set[str] | None = None,
+    ) -> list[CandidateScore]:
         allowed = await asyncio.to_thread(
             self._allowed_ids, parsed.metadata_filter_must
         )
+        if candidate_scope is not None:
+            allowed &= candidate_scope
         if not allowed:
             return []
 
