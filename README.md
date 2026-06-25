@@ -148,6 +148,33 @@ cp .env.example .env
 ./.venv/bin/python scripts/test_multiturn.py
 ```
 
+## 离线排序评估
+
+`scripts/evaluate_judge_ranking.py` 使用 LLM-as-a-judge 快速评估系统 Top10 排序：
+
+1. 对 `data/eval_queries.json` 中的 10 条招聘查询执行解析、过滤、向量召回、BM25
+   和融合排序，不调用推荐理由生成。
+2. 将系统 Top10 确定性随机打乱，只把原始 query 和候选人资料交给 Judge；Judge
+   看不到系统 rank、final score 或各分项得分。
+3. 将 Judge Top5 作为弱监督强相关集合，计算 Top5 Overlap、二元 nDCG@10 和 MRR。
+4. Judge JSON 解析失败时重试一次，仍失败则跳过该查询的平均指标。
+
+运行：
+
+```bash
+./.venv/bin/python scripts/evaluate_judge_ranking.py
+```
+
+输出：
+
+- `reports/judge_ranking_eval_results.json`
+- `reports/judge_ranking_eval_report.md`
+
+评估报告会说明：本评估使用 LLM-as-a-judge 对候选人 Top10 进行相对排序，Judge
+Top5 被视为弱监督强相关集合，用于快速评估系统排序质量。
+
+注意：运行该脚本会将每个查询对应的打乱后 Top10 候选人资料发送给配置的 GLM API。
+
 ## 清洗原则
 
 - 使用流式逐行 JSON 解析，不用会误切 Unicode 行分隔符的 `splitlines()`。

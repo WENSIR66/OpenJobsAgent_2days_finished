@@ -32,6 +32,17 @@ from backend.app.rag.retriever import (
     _sql_condition,
 )
 from backend.app.rag.service import CandidateRAGService
+from scripts.evaluate_judge_ranking import (
+    binary_ndcg_at_10,
+    candidate_for_judge,
+    compute_metrics,
+    judge_candidates,
+    reciprocal_rank,
+    render_markdown_report,
+    summarize_results,
+    top5_overlap,
+    validate_judge_ranking,
+)
 
 
 def sample_profile() -> dict:
@@ -513,3 +524,112 @@ def test_chat_turn_state_flow_without_external_api() -> None:
         assert followed.answer == "follow:10000001"
 
     asyncio.run(run())
+
+
+def test_judge_ranking_metrics() -> None:
+    system = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+    judge = ["b", "a", "f", "g", "h", "c", "d", "e", "i", "j"]
+    metrics = compute_metrics(system, judge)
+    assert top5_overlap(system, judge) == 0.4
+    assert metrics["top5_overlap"] == 0.4
+    assert metrics["mrr"] == 0.5
+    assert reciprocal_rank(system, "b") == 0.5
+    assert 0.0 < binary_ndcg_at_10(system, set(judge[:5])) < 1.0
+    assert metrics["mismatch_cases"] == {
+        "system_top5_but_not_judge_top5": ["c", "d", "e"],
+        "judge_top5_but_not_system_top5": ["f", "g", "h"],
+    }
+
+
+def test_validate_judge_ranking_requires_exact_permutation() -> None:
+    expected = ["1", "2", "3"]
+    assert validate_judge_ranking(
+        '{"ranked_candidate_ids": ["2", "1", "3"]}',
+        expected,
+    ) == ["2", "1", "3"]
+    try:
+        validate_judge_ranking(
+            '{"ranked_candidate_ids": ["2", "2", "3"]}',
+            expected,
+        )
+    except ValueError as error:
+        assert "duplicate" in str(error)
+    else:
+        raise AssertionError("Duplicate judge IDs must be rejected")
+
+
+def test_judge_retries_once_and_payload_hides_system_scores() -> None:
+    candidate = _sample_candidate("10000001", "Python Engineer")
+    candidate_payload = candidate_for_judge(candidate)
+    assert "final_score" not in candidate_payload
+    assert "vector_score" not in candidate_payload
+    assert "rank" not in candidate_payload
+
+    class FakeJudgeClient:
+        def __init__(self):
+            self.calls = 0
+
+        async def complete(self, messages, **kwargs):
+            self.calls += 1
+            if self.calls == 1:
+                return "not json"
+            return '{"ranked_candidate_ids": ["10000001"]}'
+
+    async def run() -> None:
+        client = FakeJudgeClient()
+        ranking, error = await judge_candidates(
+            client,
+            "找 Python 工程师",
+            [candidate_payload],
+        )
+        assert ranking == ["10000001"]
+        assert error is None
+        assert client.calls == 2
+
+    asyncio.run(run())
+
+
+def test_judge_report_skips_failed_queries_from_mean() -> None:
+    successful = {
+        "query": "q1",
+        "system_top10": ["1"],
+        "judge_ranking": ["1"],
+        "judge_top5": ["1"],
+        "top5_overlap": 0.2,
+        "ndcg_at_10": 1.0,
+        "mrr": 1.0,
+        "mismatch_cases": {
+            "system_top5_but_not_judge_top5": [],
+            "judge_top5_but_not_system_top5": [],
+        },
+        "judge_failed": False,
+        "judge_error": None,
+    }
+    failed = {
+        "query": "q2",
+        "system_top10": [],
+        "judge_ranking": None,
+        "judge_top5": [],
+        "top5_overlap": None,
+        "ndcg_at_10": None,
+        "mrr": None,
+        "mismatch_cases": {
+            "system_top5_but_not_judge_top5": [],
+            "judge_top5_but_not_system_top5": [],
+        },
+        "judge_failed": True,
+        "judge_error": "bad json",
+    }
+    summary = summarize_results([successful, failed])
+    assert summary["evaluated_queries"] == 1
+    assert summary["judge_failed_queries"] == 1
+    assert summary["mean_top5_overlap"] == 0.2
+    markdown = render_markdown_report(
+        {
+            "summary": summary,
+            "query_results": [successful, failed],
+        }
+    )
+    assert "# Judge Ranking Evaluation" in markdown
+    assert "mean_ndcg_at_10" in markdown
+    assert "bad json" in markdown

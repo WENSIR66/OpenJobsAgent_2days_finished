@@ -1,0 +1,703 @@
+{
+  "evaluation": "llm_judge_ranking",
+  "generated_at": "2026-06-25T02:17:44.504091+00:00",
+  "judge_model": "glm-4.5-air",
+  "retrieval_embedding_model": "embedding-3",
+  "random_seed": 20260625,
+  "methodology_note": "本评估使用 LLM-as-a-judge 对候选人 Top10 进行相对排序，Judge Top5 被视为弱监督强相关集合，用于快速评估系统排序质量。",
+  "summary": {
+    "total_queries": 10,
+    "evaluated_queries": 9,
+    "judge_failed_queries": 1,
+    "mean_top5_overlap": 0.6888888888888889,
+    "mean_ndcg_at_10": 0.9858021464452267,
+    "mean_mrr": 0.6944444444444444
+  },
+  "query_results": [
+    {
+      "query": "寻找至少5年经验的Python工程师，有AWS或GCP云平台经验优先。",
+      "parsed_query": {
+        "semantic_query": "Python engineer with AWS or GCP cloud platform experience",
+        "metadata_filter_must": [
+          {
+            "field": "total_experience_years",
+            "operator": "gte",
+            "value": 5
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Python",
+              "Python3",
+              "Django",
+              "Flask",
+              "FastAPI"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "AWS",
+              "GCP",
+              "Azure",
+              "cloud platform",
+              "cloud infrastructure"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "636422631",
+        "156898517",
+        "774208709",
+        "29411937",
+        "160948639",
+        "433578071",
+        "436640423",
+        "393092301",
+        "474179942",
+        "360439535"
+      ],
+      "judge_ranking": [
+        "29411937",
+        "774208709",
+        "636422631",
+        "156898517",
+        "393092301",
+        "360439535",
+        "160948639",
+        "433578071",
+        "474179942",
+        "436640423"
+      ],
+      "judge_top5": [
+        "29411937",
+        "774208709",
+        "636422631",
+        "156898517",
+        "393092301"
+      ],
+      "top5_overlap": 0.8,
+      "ndcg_at_10": 0.975788054854922,
+      "mrr": 0.25,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [
+          "160948639"
+        ],
+        "judge_top5_but_not_system_top5": [
+          "393092301"
+        ]
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "找一名Java工程师，熟悉Spring Boot和微服务，8年以上经验，AWS经验优先。",
+      "parsed_query": {
+        "semantic_query": "Java engineer with Spring Boot and microservices experience, 8+ years, AWS experience preferred",
+        "metadata_filter_must": [
+          {
+            "field": "total_experience_years",
+            "operator": "gte",
+            "value": 8
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Java",
+              "J2EE",
+              "Spring",
+              "Spring Boot"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "microservices",
+              "microservice architecture"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "AWS",
+              "GCP",
+              "Azure",
+              "cloud platform",
+              "cloud infrastructure"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "635878189",
+        "156898517",
+        "774208709"
+      ],
+      "judge_ranking": [
+        "635878189",
+        "156898517",
+        "774208709"
+      ],
+      "judge_top5": [
+        "635878189",
+        "156898517",
+        "774208709"
+      ],
+      "top5_overlap": 0.6,
+      "ndcg_at_10": 1.0,
+      "mrr": 1.0,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "寻找数据分析师，要求会SQL，有Tableau或Power BI经验优先。",
+      "parsed_query": {
+        "semantic_query": "SQL data analyst with Tableau or Power BI experience",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "data analyst",
+              "BI analyst",
+              "business intelligence",
+              "analytics analyst"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "SQL",
+              "MySQL",
+              "PostgreSQL",
+              "T-SQL",
+              "data querying"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Tableau",
+              "Power BI",
+              "data visualization"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "638005831",
+        "478171317",
+        "427539918"
+      ],
+      "judge_ranking": [
+        "638005831",
+        "478171317",
+        "427539918"
+      ],
+      "judge_top5": [
+        "638005831",
+        "478171317",
+        "427539918"
+      ],
+      "top5_overlap": 0.6,
+      "ndcg_at_10": 1.0,
+      "mrr": 1.0,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "找有政府合同或国防项目经验的项目经理，具备团队管理经验优先。",
+      "parsed_query": {
+        "semantic_query": "project manager with government contracts or defense projects experience and team management",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "project manager",
+              "project lead",
+              "project coordinator"
+            ]
+          },
+          {
+            "field": "experience_descriptions",
+            "operator": "in",
+            "value": [
+              "government contract",
+              "government project",
+              "defense project",
+              "military project",
+              "public sector"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "team management",
+              "team leadership",
+              "people management"
+            ]
+          }
+        ]
+      },
+      "system_top10": [],
+      "judge_ranking": null,
+      "judge_top5": [],
+      "top5_overlap": null,
+      "ndcg_at_10": null,
+      "mrr": null,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": true,
+      "judge_error": "System returned no candidates"
+    },
+    {
+      "query": "寻找医疗账单和保险理赔方向的候选人，熟悉合规、Medicare或Medicaid优先。",
+      "parsed_query": {
+        "semantic_query": "medical billing and insurance claims specialist with compliance Medicare Medicaid experience",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "medical billing",
+              "insurance claims",
+              "medical coder",
+              "billing specialist",
+              "claims analyst",
+              "healthcare reimbursement",
+              "medical reimbursement"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "compliance",
+              "HIPAA",
+              "Medicare",
+              "Medicaid",
+              "healthcare compliance",
+              "medical billing compliance"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "99486673",
+        "231763512",
+        "806050755"
+      ],
+      "judge_ranking": [
+        "806050755",
+        "99486673",
+        "231763512"
+      ],
+      "judge_top5": [
+        "806050755",
+        "99486673",
+        "231763512"
+      ],
+      "top5_overlap": 0.6,
+      "ndcg_at_10": 1.0,
+      "mrr": 0.3333333333333333,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "找有Kubernetes、Docker和CI/CD经验的DevOps或云工程师。",
+      "parsed_query": {
+        "semantic_query": "DevOps or cloud engineer with Kubernetes Docker and CI/CD experience",
+        "metadata_filter_must": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Kubernetes",
+              "K8s",
+              "K8",
+              "container orchestration"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Docker",
+              "Docker container",
+              "containerization"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "CI/CD",
+              "continuous integration",
+              "continuous deployment",
+              "Jenkins",
+              "GitLab CI",
+              "GitHub Actions"
+            ]
+          },
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "DevOps",
+              "DevOps engineer",
+              "DevOps specialist",
+              "cloud engineer",
+              "cloud infrastructure engineer",
+              "cloud systems engineer"
+            ]
+          }
+        ],
+        "metadata_filter_should": []
+      },
+      "system_top10": [
+        "636422631",
+        "635878189",
+        "226577945"
+      ],
+      "judge_ranking": [
+        "636422631",
+        "226577945",
+        "635878189"
+      ],
+      "judge_top5": [
+        "636422631",
+        "226577945",
+        "635878189"
+      ],
+      "top5_overlap": 0.6,
+      "ndcg_at_10": 1.0,
+      "mrr": 1.0,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "寻找产品经理，做过B2B或SaaS产品，有从0到1产品经验优先。",
+      "parsed_query": {
+        "semantic_query": "product manager with B2B or SaaS product experience and zero-to-one product development",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "product manager",
+              "product owner",
+              "product lead",
+              "SaaS product"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "0-to-1",
+              "zero-to-one",
+              "new product development",
+              "product launch"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "123173099",
+        "396506447",
+        "433657894",
+        "393414383",
+        "9312039",
+        "75485227"
+      ],
+      "judge_ranking": [
+        "123173099",
+        "75485227",
+        "393414383",
+        "9312039",
+        "433657894",
+        "396506447"
+      ],
+      "judge_top5": [
+        "123173099",
+        "75485227",
+        "393414383",
+        "9312039",
+        "433657894"
+      ],
+      "top5_overlap": 0.8,
+      "ndcg_at_10": 0.9068250379649666,
+      "mrr": 1.0,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [
+          "396506447"
+        ],
+        "judge_top5_but_not_system_top5": [
+          "75485227"
+        ]
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "找具备机器学习、数据科学或算法经验的候选人，Python经验优先。",
+      "parsed_query": {
+        "semantic_query": "machine learning data science algorithm experience with Python preference",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "machine learning engineer",
+              "ML engineer",
+              "data scientist",
+              "algorithm engineer",
+              "research scientist",
+              "AI engineer",
+              "applied scientist"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "Python",
+              "Python3",
+              "Django",
+              "Flask",
+              "FastAPI"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "522332113",
+        "395210742",
+        "632892002",
+        "636137009"
+      ],
+      "judge_ranking": [
+        "395210742",
+        "632892002",
+        "636137009",
+        "522332113"
+      ],
+      "judge_top5": [
+        "395210742",
+        "632892002",
+        "636137009",
+        "522332113"
+      ],
+      "top5_overlap": 0.8,
+      "ndcg_at_10": 1.0,
+      "mrr": 0.5,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "寻找至少10年经验的软件架构师，有微服务、分布式系统和云迁移经验优先。",
+      "parsed_query": {
+        "semantic_query": "software architect with microservices distributed systems and cloud migration experience",
+        "metadata_filter_must": [
+          {
+            "field": "total_experience_years",
+            "operator": "gte",
+            "value": 10
+          },
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "software architect",
+              "system architect",
+              "principal architect",
+              "technical architect"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "microservices",
+              "microservice architecture"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "distributed systems",
+              "distributed architecture"
+            ]
+          },
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "AWS",
+              "GCP",
+              "Azure",
+              "cloud platform",
+              "cloud infrastructure"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "521932073",
+        "29411937",
+        "351339161"
+      ],
+      "judge_ranking": [
+        "521932073",
+        "29411937",
+        "351339161"
+      ],
+      "judge_top5": [
+        "521932073",
+        "29411937",
+        "351339161"
+      ],
+      "top5_overlap": 0.6,
+      "ndcg_at_10": 1.0,
+      "mrr": 1.0,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [],
+        "judge_top5_but_not_system_top5": []
+      },
+      "judge_failed": false,
+      "judge_error": null
+    },
+    {
+      "query": "找财务或会计管理方向候选人，具备预算、审计或应收账款经验优先。",
+      "parsed_query": {
+        "semantic_query": "Finance or accounting management professional with budget, audit or accounts receivable experience",
+        "metadata_filter_must": [
+          {
+            "field": "roles",
+            "operator": "in",
+            "value": [
+              "finance manager",
+              "accounting manager",
+              "financial controller",
+              "finance director",
+              "accounting director",
+              "CFO",
+              "financial manager",
+              "accounting supervisor"
+            ]
+          }
+        ],
+        "metadata_filter_should": [
+          {
+            "field": "skills",
+            "operator": "in",
+            "value": [
+              "budget",
+              "budgeting",
+              "financial planning",
+              "audit",
+              "auditing",
+              "accounts receivable",
+              "AR",
+              "credit control",
+              "financial analysis"
+            ]
+          }
+        ]
+      },
+      "system_top10": [
+        "217314122",
+        "395242755",
+        "480990750",
+        "29322809",
+        "156985353",
+        "69758260",
+        "218118758",
+        "69815773",
+        "521997531",
+        "395241535"
+      ],
+      "judge_ranking": [
+        "69758260",
+        "480990750",
+        "395242755",
+        "217314122",
+        "29322809",
+        "156985353",
+        "218118758",
+        "69815773",
+        "521997531",
+        "395241535"
+      ],
+      "judge_top5": [
+        "69758260",
+        "480990750",
+        "395242755",
+        "217314122",
+        "29322809"
+      ],
+      "top5_overlap": 0.8,
+      "ndcg_at_10": 0.9896062251871524,
+      "mrr": 0.16666666666666666,
+      "mismatch_cases": {
+        "system_top5_but_not_judge_top5": [
+          "156985353"
+        ],
+        "judge_top5_but_not_system_top5": [
+          "69758260"
+        ]
+      },
+      "judge_failed": false,
+      "judge_error": null
+    }
+  ]
+}
